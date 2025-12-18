@@ -11,6 +11,35 @@ module.exports = defineConfig({
       authCors: process.env.AUTH_CORS!,
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
-    }
-  }
+    },
+    databaseDriverOptions: { //disable SSL for docker
+      ssl: false,
+      sslmode: "disable",
+    },
+    admin: { //configure the Vite development server to listen on all network interfaces (0.0.0.0) and set up HMR to work correctly within the Docker environment
+      vite: (config) => {
+        return {
+          ...config,
+          server: {
+            ...config.server,
+            host: "0.0.0.0",
+            // Allow all hosts when running in Docker (development mode)
+            // In production, this should be more restrictive
+            allowedHosts: [
+              "localhost",
+              ".localhost",
+              "127.0.0.1",
+            ],
+            hmr: {
+              ...config.server?.hmr,
+              // HMR websocket port inside container
+              port: 5173, 
+              // Port browser connects to (exposed in docker-compose.yml)
+              clientPort: 5173,
+            },
+          },
+        }
+      },
+    },  
+  },
 })
